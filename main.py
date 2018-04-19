@@ -8,20 +8,26 @@
 # $main.py <optional filename>
 #****************************************
 
-
+import sys
 import pprint
-from util import readdict
-from metrics import get_trip_durations
-
+from util import readdict, data_cleanup_missing, data_cleanup_enumerate_and_group, get_frequency_dictionaries
 
 def main():
     """main function"""
+    names = ["Divvy_Stations_2017_Q3Q4.csv", "Divvy_Trips_2017_Q3.csv", "Divvy_Trips_2017_Q4.csv"]
     directory = "Divvy_Trips_2017_Q3Q4/"
-    # stations = readdict(directory + "Divvy_Stations_2017_Q3Q4.csv")
-    # Q3_data = readdict(directory + "Divvy_Trips_2017_Q3.csv")
-    # Q4_data = readdict(directory + "Divvy_Trips_2017_Q4.csv")
-    first_data = readdict(directory + "first300.csv")
-    # print(get_avg_trip_duration(Q4_data))
+    fn = names[int(sys.argv[1])] if len(sys.argv) > 1 else "first300.csv"
+    fn = directory + fn
+    print("doing operations on " + fn)
+    data = readdict(fn)
+
+    data = data_cleanup_missing(data)
+    data_cleanup_enumerate_and_group(data)
+
+    dictionary, most_common = get_frequency_dictionaries(data, data[0].keys())
+
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(most_common)
 
 if __name__ == "__main__":
     main()
