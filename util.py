@@ -42,7 +42,7 @@ def data_cleanup_enumerate_and_group(data):
         entry['gender'] = 1 if entry['gender'] == 'Female' else 0
         entry['usertype'] = 1 if entry['usertype'] == 'Subscriber' else 0
         if entry['birthyear'] == '':
-            print(entry)
+            print("ERROR: " + entry)
         entry['birthyear'] = '1950' if int(entry['birthyear']) < 1950 else entry['birthyear']
 
 def round_down(num, divisor):
