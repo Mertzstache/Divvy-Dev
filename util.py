@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """utilities and common io scripts"""
 from collections import Counter
+import pickle
 
-ROUND_TO_NEAREST = 30
+ROUND_TO_NEAREST = 300
 IN_COMMON = 10
 
 def readdict(filename):
@@ -31,7 +32,13 @@ def get_attribute(data, attribute_name, trans=str):
 
 def data_cleanup_missing(data):
     """cleans data up by removing entries that are missing data"""
-    return [entry for entry in data if '' not in entry.values()]
+    entries = []
+    for entry in data:
+        if '' in entry.values():
+            for key in entry:
+                entry[key] = 'Not Available' if entry[key] == '' else entry[key]
+        entries.append(entry)
+    return entries#[entry for entry in data if '' not in entry.values()]
 
 def data_cleanup_enumerate_and_group(data):
     """manual cleanup and enumeration"""
@@ -39,11 +46,11 @@ def data_cleanup_enumerate_and_group(data):
     for entry in data:
         entry['tripduration'] = round_down(int(entry['tripduration']), ROUND_TO_NEAREST)
         entry['tripduration'] = 9930 if entry['tripduration'] > 9930 else entry['tripduration']
-        entry['gender'] = 1 if entry['gender'] == 'Female' else 0
-        entry['usertype'] = 1 if entry['usertype'] == 'Subscriber' else 0
-        if entry['birthyear'] == '':
-            print("ERROR: " + entry)
-        entry['birthyear'] = '1950' if int(entry['birthyear']) < 1950 else entry['birthyear']
+        # entry['gender'] = entry['gender'] if entry['gender'] == 'Not Available' else en
+        # entry['usertype'] = 1 if entry['usertype'] == 'Subscriber' else 0
+        # if entry['birthyear'] == '':
+            # print("ERROR: " + entry)
+        # entry['birthyear'] = '1950' if int(entry['birthyear']) < 1950 else entry['birthyear']
 
 def round_down(num, divisor):
     """simple round down function"""
@@ -79,3 +86,16 @@ def counting(ctrs):
 def filter(attribute, value):
     return []
     
+
+def save_obj(obj, name ):
+    with open('obj/'+ name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+def load_obj(name ):
+    with open('obj/' + name + '.pkl', 'rb') as f:
+        return pickle.load(f)
+
+def standard_procedures(fn):
+    data = readdict(fn)
+    data = data_cleanup_missing(data)
+    data_cleanup_enumerate_and_group(data)
+    return get_frequency_dictionaries(data, data[0].keys())

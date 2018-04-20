@@ -2,8 +2,7 @@
 <html>
     <head>
         <title>Bicycling layer</title>
-        {{mymap.js}}
-        {{stations.js}}
+        <!-- {{mymap.js}} -->
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -13,28 +12,194 @@
             #map {
             height: 100%;
             }
-      </style>
+        </style>
+
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+        <!-- Bootstrap core CSS -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Material Design Bootstrap -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.5.0/css/mdb.min.css" rel="stylesheet">
+        <!-- JQuery -->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <!-- Bootstrap tooltips -->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.13.0/umd/popper.min.js"></script>
+        <!-- Bootstrap core JavaScript -->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
+        <!-- MDB core JavaScript -->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.5.0/js/mdb.min.js"></script>
+
     </head>
     <body>
         <div class="container">
-        <h1>Flask Google Maps Example</h1>
-        <h2> First map generated in view</h2>
-        {{mymap.html}}
+            <h1>Flask Google Maps Example</h1>
+            <h2> Map with Bike Lanes and stations</h2>
+            <!-- {{mymap.html}} -->
+            <div id="map" style="width:100%;height:500px;">
+                <script>
+                    var chicago = {lat: 41.85, lng: -87.65};
+                    var opposite = true
+                    function initMap() {
+           // var map = new Map({{mymap.html}})
+                        var map = new google.maps.Map(document.getElementById('map'), 
+                            {
+                                zoom: 14, 
+                                center: chicago
+                            });
+                    var key;
+                    // var len = '{{json_stations}}'.length;
+                    // console.log('{{json_stations|safe}}');
+                    stations = JSON.parse('{{json_stations|safe}}');
+                    for (key in stations){
+                        var marker = new google.maps.Marker({
+                            position: {lat: parseFloat(stations[key]['lat']), lng: parseFloat(stations[key]['lng'])},
+                            map: map,
+                            title: stations[key]['name'],
+                            icon: stations[key]['img']
+
+                        });
+                    }
+                    var centerControlDiv = document.createElement('div');
+                    var centerControl = new CenterControl(centerControlDiv, map);
+
+                    centerControlDiv.index = 1;
+                    map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+                    var bikeLayer = new google.maps.BicyclingLayer();
+                    bikeLayer.setMap(map);
+                  }
+                  /**
+                   * The CenterControl adds a control to the map that recenters the map on
+                   * Chicago.
+                   * This constructor takes the control DIV as an argument.
+                   * @constructor
+                   */
+                  function CenterControl(controlDiv, map) {
+
+                    // Set CSS for the control border.
+                    var controlUI = document.createElement('div');
+                    controlUI.style.backgroundColor = '#fff';
+                    controlUI.style.border = '2px solid #fff';
+                    controlUI.style.borderRadius = '3px';
+                    controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+                    controlUI.style.cursor = 'pointer';
+                    controlUI.style.marginBottom = '22px';
+                    controlUI.style.textAlign = 'center';
+                    controlUI.title = 'Click to show bike lanes and stations.';
+                    controlDiv.appendChild(controlUI);
+
+                    // Set CSS for the control interior.
+                    var controlText = document.createElement('div');
+                    controlText.style.color = 'rgb(25,25,25)';
+                    controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+                    controlText.style.fontSize = '16px';
+                    controlText.style.lineHeight = '38px';
+                    controlText.style.paddingLeft = '5px';
+                    controlText.style.paddingRight = '5px';
+                    controlText.innerHTML = 'Lanes and Stations';
+                    controlUI.appendChild(controlText);
+
+                    // Setup the click event listeners: simply set the map to Chicago.
+                    controlUI.addEventListener('click', function() {
+                        if (opposite){
+                            initMap2();
+                            opposite = false;
+                        }
+                        else { 
+                            initMap();
+                            opposite = true 
+                        }
+                    });
+                  }
+                  function initMap2() {
+           // var map = new Map({{mymap.html}})
+                        var map = new google.maps.Map(document.getElementById('map'), 
+                            {
+                                zoom: 14, 
+                                center: chicago
+                            });
+                    var key;
+                    // var len = '{{json_stations}}'.length;
+                    // console.log('{{json_stations|safe}}');
+                    
+                    var centerControlDiv = document.createElement('div');
+                    var centerControl = new CenterControl(centerControlDiv, map);
+
+                    centerControlDiv.index = 1;
+                    map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+                  }
+
+                </script>
+                <script async defer
+                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAscj7Ns0L3oSRzaC5tEHzY91uT0vQkkCI&callback=initMap">
+                </script> 
+
         </div>
-        <div id="map" style="width:100%;height:500px;">
-            <script>
-              function initMap() {
-                // var map = new Map({{mymap.html}})
-                var map = new google.maps.Map(document.getElementById('map'), {zoom: 14, center: {lat: 41.8781, lng: -87.6298}
-            });
-                var bikeLayer = new google.maps.BicyclingLayer();
-                bikeLayer.setMap(map);
-              }
-            </script>
-            <script async defer
-            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAscj7Ns0L3oSRzaC5tEHzY91uT0vQkkCI&callback=initMap">
-            </script>
+            <div class="row">
+                <div class="col">
+                    <canvas id="genderChart" width="200" height="100"></canvas>
+                </div>
+                <div class='col'>                    
+                    <canvas id="membershipChart" width="200" height="100"></canvas>
+                </div>
+            </div>
+            <div class="row">
+                <div class='col'>                    
+                    <canvas id="tripChart" width="200" height="100"></canvas>
+                </div>
+                </div>
+                <div class='col'>                    
+                    <canvas id="birthChart" width="200" height="100"></canvas>
+                </div>
+            </div>
         </div>
+
+        <script>
+            var frequencies = JSON.parse('{{frequencies|safe}}');
+            create_chart("genderChart", 'gender');
+            create_chart("membershipChart", 'usertype');
+            create_chart("tripChart", 'tripduration');
+            create_chart("birthChart", 'birthyear');
+
+            function create_chart(id, attribute){
+                var backgroundColors = [];
+                var borderColors = [];
+                var i;
+                for (i = 0; i < Object.keys(frequencies[attribute]).length; i++){
+                    backgroundColors.push('rgba(54, 162, 235, 0.2)');
+                    borderColors.push('rgba(54, 162, 235, 1)');
+                }
+
+                var ctxB = document.getElementById(id).getContext('2d');
+                var myBarChart = new Chart(ctxB, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(frequencies[attribute]),
+                        datasets: [{
+                            label: 'Frequencies',
+                            data: Object.values(frequencies[attribute]),
+                            backgroundColor: backgroundColors,
+                            borderColor: borderColors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero:true
+                                }
+                            }]
+                        }
+                    }
+                });
+            };
+            
+
+        </script>
+    </div>
+        
         
         <!--<div class='container' id="map" style="width:100%;height:500px;"></div>
             <script>
@@ -47,7 +212,5 @@
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAscj7Ns0L3oSRzaC5tEHzY91uT0vQkkCI&callback=initMap">
             </script>
         </div>-->
-
     </body>
-</html>
 </html>
