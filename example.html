@@ -40,7 +40,6 @@
                     var chicago = {lat: 41.85, lng: -87.65};
                     var opposite = true
                     function initMap() {
-           // var map = new Map({{mymap.html}})
                         var map = new google.maps.Map(document.getElementById('map'), 
                             {
                                 zoom: 14, 
@@ -49,16 +48,27 @@
                     var key;
                     // var len = '{{json_stations}}'.length;
                     // console.log('{{json_stations|safe}}');
-                    stations = JSON.parse('{{json_stations|safe}}');
-                    for (key in stations){
+                    var stations = JSON.parse('{{json_stations|safe}}');
+                    console.log(stations)
+
+                    var markers = stations.map(function(station, i) {
+                        var infowindow = new google.maps.InfoWindow({
+                            content: station['name']
+                        });
                         var marker = new google.maps.Marker({
-                            position: {lat: parseFloat(stations[key]['lat']), lng: parseFloat(stations[key]['lng'])},
-                            map: map,
-                            title: stations[key]['name'],
-                            icon: stations[key]['img']
+                            position: {lat: parseFloat(station['lat']), lng: parseFloat(station['lng'])},
+                            // title: station['name']//,
+                            // icon: station['img']
 
                         });
-                    }
+                        marker.addListener('click', function() {
+                          infowindow.open(map, marker);
+                        });
+                        return marker
+                    });
+                    var markerCluster = new MarkerClusterer(map, markers,
+            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+      
                     var centerControlDiv = document.createElement('div');
                     var centerControl = new CenterControl(centerControlDiv, map);
 
@@ -67,6 +77,7 @@
 
                     var bikeLayer = new google.maps.BicyclingLayer();
                     bikeLayer.setMap(map);
+                    map.data.loadGeoJson("https://data.cityofchicago.org/resource/unjd-c2ca.json");
                   }
                   /**
                    * The CenterControl adds a control to the map that recenters the map on
@@ -102,6 +113,8 @@
                     // Setup the click event listeners: simply set the map to Chicago.
                     controlUI.addEventListener('click', function() {
                         if (opposite){
+                            // map = document.getElementById('map')
+                            // map.setMap(null)
                             initMap2();
                             opposite = false;
                         }
@@ -131,9 +144,12 @@
                   }
 
                 </script>
+                <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"> </script>
                 <script async defer
                 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAscj7Ns0L3oSRzaC5tEHzY91uT0vQkkCI&callback=initMap">
                 </script> 
+                
+
 
         </div>
             <div class="row">

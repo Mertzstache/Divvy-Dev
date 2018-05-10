@@ -3,9 +3,11 @@
 """utilities and common io scripts"""
 from collections import Counter
 import pickle
+import matplotlib.pyplot as plt
 
 ROUND_TO_NEAREST = 300
 IN_COMMON = 10
+TAKE_OUT = []#('trip_id', 'start_time', 'end_time', 'from_station_id', 'to_station_id', 'bikeid')
 
 def readdict(filename):
     """reads in the csv with labels in first row"""
@@ -14,11 +16,12 @@ def readdict(filename):
         # print(csvfile.readline().replace('\n','').replace('\"','').split)
         labels = csvfile.readline().replace('\n','').replace('\"','').split(',')
         # labels = [ l for l in labels if l not in ('start_time', 'stop_time', 'from_station_name', 'to_station_name')]
+        print(labels)
         for row in csvfile:
             members = {}
             row = row.replace('\n','').replace('\"','').split(',')
             for idx, lbl in enumerate(labels):
-                if lbl not in  ('trip_id', 'start_time', 'end_time', 'from_station_name', 'from_station_id', 'to_station_id', 'to_station_name', 'bikeid'):
+                if lbl not in  TAKE_OUT:
                     members[lbl] = str(row[idx])
             rows.append(members)
     return rows
@@ -28,7 +31,7 @@ def get_attribute(data, attribute_name, trans=str):
     data = data to be evaluated
     attribute_name = name of the attribute to be extracted
     trans = transformation to perform on the data, such as int, default is set to string"""
-    return [trans(a[attribute_name]) for a in data if a[attribute_name] != '']
+    return [trans(a[attribute_name]) for a in data if a[attribute_name] != 'Not Available']
 
 def data_cleanup_missing(data):
     """cleans data up by removing entries that are missing data"""
@@ -42,7 +45,7 @@ def data_cleanup_missing(data):
 
 def data_cleanup_enumerate_and_group(data):
     """manual cleanup and enumeration"""
-    print(data[0].keys())
+    # print(data[0].keys())
     for entry in data:
         entry['tripduration'] = round_down(int(entry['tripduration']), ROUND_TO_NEAREST)
         entry['tripduration'] = 9930 if entry['tripduration'] > 9930 else entry['tripduration']
@@ -83,8 +86,12 @@ def counting(ctrs):
         in_common[ctr] = common.most_common(IN_COMMON)
     return in_common
 
-def filter(attribute, value):
-    return []
+def raw_filter(data, attribute):
+    # print(data)
+    return [entry[attribute] for entry in data]
+
+def filter(data, attribute, value):
+    return [entry for entry in data if entry[attribute] == value]
     
 
 def save_obj(obj, name ):
@@ -98,4 +105,19 @@ def standard_procedures(fn):
     data = readdict(fn)
     data = data_cleanup_missing(data)
     data_cleanup_enumerate_and_group(data)
-    return get_frequency_dictionaries(data, data[0].keys())
+    return get_frequency_dictionaries(data, data[0].keys()), data
+
+def get_risky_stations(fn):
+    data = readdict(fn)
+    data = data_cleanup_missing(data)
+    filtered_to = raw_filter(data, 'TO STATION NAME')
+    filtered_from = raw_filter(data, 'FROM STATION NAME')
+    counter_to = Counter(filtered_to)
+    counter_from = Counter(filtered_from)
+    net_counter = counter_to
+    net_counter.subtract(counter_from)
+    totals = counter_to + counter_from
+    return net_counter, totals
+
+
+

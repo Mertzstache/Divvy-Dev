@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Simulator Tool</title>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="robots" content="noindex">
+          <script
+          src="https://code.jquery.com/jquery-2.2.4.min.js"
+          integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+          crossorigin="anonymous"></script>
+          <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+          <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+          <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.css">
+          <script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.js"></script>
+        <style type='text/css'>
+            #map {
+            height: 100%;
+            }
+        </style>
+
+        <style type='text/css'>
+        .row-index {
+          width: 50px;
+          display: inline-block;
+        }
+      </style>
+        <script type='text/javascript'>
+        $(window).load(function(){
+          var columns = {{columns|tojson}};
+          var data = {{data|tojson}};
+
+          $(function() {
+            $('#table').bootstrapTable({ 
+              data: data,
+              columns: columns,
+            });
+
+          });
+
+        });
+        </script>
+
+    </head>
+    <body>
+        <div class="container" style="padding: 10px; ">
+            <h1> Simulator Tool:</h1>
+            <h3> Advance the time in minutes, and see how many stations have a deficit or surplus.</h3>
+            <h4> The table starts out as all stations, then only the ones that have a deficit or surplus. </h4>
+            <h3>Current Time: {{curr_time}}</h3>
+            
+            <div id="toolbar"> <form action="{{ url_for('update_time') }}" method = "POST">
+                 <input type="text"  name="expression" value="{{formfill}}" />
+                <input type="submit" class="btn btn-info" value="Advance Time in Minutes" /></div>
+            <table
+              id="table"
+              data-toggle="true"
+              data-toolbar="#toolbar"
+              data-search="true"
+              data-show-columns="true"
+              data-pagination="true"
+              data-height="500">
+            </table>
+
+            <h2> Google Maps Integration </h2>
+            <h5> Search by ID Number by entering the ID in the text field, and using the button attached to the map to recenter it on that station</h5>
+                <div class="col-xs-2" style="padding-bottom: 10px">
+                    <input type="text" class="form-control" id="textfield"/>
+                </div>
+            <div id="map" style="width:100%;height:500px;">
+                <script>
+                    var chicago = {lat: 41.85, lng: -87.65};
+                    var opposite = true
+                    function initMap() {
+                        var map = new google.maps.Map(document.getElementById('map'), 
+                            {
+                                zoom: 14, 
+                                center: chicago
+                            });
+                    var key;
+                    var stations = JSON.parse('{{json_stations|safe}}');
+
+                    var markers = stations.map(function(station, i) {
+                        var infowindow = new google.maps.InfoWindow({
+                            content: station['name']
+                        });
+                        var marker = new google.maps.Marker({
+                            position: {lat: parseFloat(station['lat']), lng: parseFloat(station['lng'])},
+
+                        });
+                        marker.addListener('click', function() {
+                          infowindow.open(map, marker);
+                        });
+                        return marker
+                    });
+                    var markerCluster = new MarkerClusterer(map, markers,
+            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+      
+                    var centerControlDiv = document.createElement('div');
+                    var centerControl = new CenterControl(centerControlDiv, map);
+
+                    centerControlDiv.index = 1;
+                    map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+                    var bikeLayer = new google.maps.BicyclingLayer();
+                    bikeLayer.setMap(map);
+                    map.data.loadGeoJson("https://data.cityofchicago.org/resource/unjd-c2ca.json");
+                  }
+                  /**
+                   * The CenterControl adds a control to the map that recenters the map on
+                   * Chicago.
+                   * This constructor takes the control DIV as an argument.
+                   * @constructor
+                   */
+                  function CenterControl(controlDiv, map) {
+
+                    // Set CSS for the control border.
+                    var controlUI = document.createElement('div');
+                    controlUI.style.backgroundColor = '#fff';
+                    controlUI.style.border = '2px solid #fff';
+                    controlUI.style.borderRadius = '3px';
+                    controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+                    controlUI.style.cursor = 'pointer';
+                    controlUI.style.marginBottom = '22px';
+                    controlUI.style.textAlign = 'center';
+                    controlUI.title = 'Click to Search for Stations.';
+                    controlDiv.appendChild(controlUI);
+
+                    // Set CSS for the control interior.
+                    var controlText = document.createElement('div');
+                    controlText.style.color = 'rgb(25,25,25)';
+                    controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+                    controlText.style.fontSize = '16px';
+                    controlText.style.lineHeight = '38px';
+                    controlText.style.paddingLeft = '5px';
+                    controlText.style.paddingRight = '5px';
+                    controlText.innerHTML = 'Search';
+                    controlUI.appendChild(controlText);
+
+                    // Setup the click event listeners: simply set the map to Chicago.
+                    controlUI.addEventListener('click', function() {
+
+                        var id = document.getElementById("textfield").value;
+                        var stations = JSON.parse('{{json_stations|safe}}');
+                        var location = {lat: 41.85, lng: -87.65};
+                        // map = document.getElementById('map');
+                        var i;
+                        for (i=0; i<stations.length; i++){
+                            if (id == parseInt(stations[i]['id'])){
+                                location = {lat: parseFloat(stations[i]['lat']), lng: parseFloat(stations[i]['lng'])};
+                                break;
+                            }
+                        }
+                        map.setCenter(location)
+
+                    });
+                  }
+                </script>
+
+                <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"> </script>
+
+                <script async defer
+                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAscj7Ns0L3oSRzaC5tEHzY91uT0vQkkCI&callback=initMap">
+                </script> 
+        </div>
+    </div>
+    </body>
+</html>
